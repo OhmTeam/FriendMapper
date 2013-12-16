@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- TODO: Replace "com.example.hellomap" with your desired package name -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.example.hellomap"
+          package="com.ohmteam.friendmapper"
           android:versionCode="1"
           android:versionName="1.0">
 
@@ -9,11 +9,10 @@
             android:minSdkVersion="8"
             android:targetSdkVersion="17"/>
 
-    <!-- TODO: Replace "com.example.hellomap" with your package name -->
     <permission
-            android:name="com.example.hellomap.permission.MAPS_RECEIVE"
+            android:name="com.ohmteam.friendmapper.permission.MAPS_RECEIVE"
             android:protectionLevel="signature"/>
-    <uses-permission android:name="com.example.hellomap.permission.MAPS_RECEIVE"/>
+    <uses-permission android:name="com.ohmteam.friendmapper.permission.MAPS_RECEIVE"/>
 
     <!-- The following four permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -38,7 +37,7 @@
              https://developers.google.com/maps/documentation/android/start#the_google_maps_api_key -->
         <meta-data
                 android:name="com.google.android.maps.v2.API_KEY"
-                android:value="AIzaSyC9Rg1nZthe3cpS5InTvz_DlT9UhKbLVOw"/>
+                android:value="AIzaSyCJS-icG6lEt_1oQYTaZhDxvY8Px-KJk6M"/>
 
         <activity
                 android:name="MainActivity"
