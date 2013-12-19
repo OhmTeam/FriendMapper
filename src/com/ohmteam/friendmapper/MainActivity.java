@@ -1,16 +1,22 @@
 package com.ohmteam.friendmapper;
 
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 
+import com.facebook.Session;
+import com.facebook.model.GraphUser;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -21,11 +27,23 @@ import com.ohmteam.friendmapper.util.ResultCallback;
 public class MainActivity extends FragmentActivity {
 	private GoogleMap mMap;
 
+	private MainFragment mainFragment;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
-		setUpMapIfNeeded();
+		// setContentView(R.layout.main);
+		// setUpMapIfNeeded();
+		// super.onCreate(savedInstanceState);
+
+		if (savedInstanceState == null) {
+			// Add the fragment on initial activity setup
+			mainFragment = new MainFragment();
+			getSupportFragmentManager().beginTransaction().add(android.R.id.content, mainFragment).commit();
+		} else {
+			// Or set the fragment from restored state info
+			mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(android.R.id.content);
+		}
 	}
 
 	@Override
@@ -45,6 +63,43 @@ public class MainActivity extends FragmentActivity {
 		// Initialize map options. For example:
 		// mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 		mMap.setMyLocationEnabled(true);
+
+		mainFragment.runOnNextLogin(new Runnable() {
+			@Override
+			public void run() {
+				Log.i("MainFragment", "Logged in for the first time probably!");
+				FriendsLoader loader = new FriendsLoader();
+
+				loader.loadFriends(Session.getActiveSession(), new FriendsLoader.Callback() {
+					@Override
+					public void onComplete(final Map<GraphUser, FriendLocation> friendsLocations) {
+						Log.d("MainFragment", "loaded " + friendsLocations.size()
+								+ " friends... now to put them on the map");
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								for (Entry<GraphUser, FriendLocation> entry : friendsLocations.entrySet()) {
+									// Log.d("MainFragment",
+									// "friend: " + entry.getKey().getName() +
+									// " at " + entry.getValue());
+									String friendName = entry.getKey().getName();
+									FriendLocation loc = entry.getValue();
+									LatLng locLL = new LatLng(loc.getLatitude(), loc.getLongitude());
+									Log.d("Foo", friendName + " at " + locLL);
+									MarkerOptions mo = new MarkerOptions();
+									mo.position(locLL);
+									mo.title(friendName);
+									mo.icon(BitmapDescriptorFactory.defaultMarker());
+
+									mMap.addMarker(mo);
+								}
+
+							}
+						});
+					}
+				});
+			}
+		});
 
 		// Set Latitude and Longitude for a new marker here
 		// I've called it home, because it currently points at my
