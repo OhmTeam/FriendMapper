@@ -21,6 +21,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.ohmteam.friendmapper.io.ImageLoaderTask;
+import com.ohmteam.friendmapper.util.ContentOverseer;
 import com.ohmteam.friendmapper.util.DaemonThreadFactory;
 import com.ohmteam.friendmapper.util.ResultCallback;
 
@@ -78,17 +79,30 @@ public class MainActivity extends FragmentActivity {
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
+								
+								ContentOverseer usedLocationsMap = new ContentOverseer();
 								for (Entry<GraphUser, FriendLocation> entry : friendsLocations.entrySet()) {
 									// Log.d("MainFragment",
 									// "friend: " + entry.getKey().getName() +
 									// " at " + entry.getValue());
 									String friendName = entry.getKey().getName();
 									FriendLocation loc = entry.getValue();
+									
+									
 									LatLng locLL = new LatLng(loc.getLatitude(), loc.getLongitude());
 									Log.d("Foo", friendName + " at " + locLL);
+									
+									//Add Location to location used maps. If if is already a ued location, the friends name will be
+									//added to the associated set. 
+									usedLocationsMap.addUsedLocation(locLL, friendName);
+									
+								}
+								for (LatLng markerCoord : usedLocationsMap.getUsedLocations())
+								{
+									
 									MarkerOptions mo = new MarkerOptions();
-									mo.position(locLL);
-									mo.title(friendName);
+									mo.position(markerCoord);
+									mo.title(usedLocationsMap.getFriendsFromLoc(markerCoord));
 									mo.icon(BitmapDescriptorFactory.defaultMarker());
 
 									mMap.addMarker(mo);
@@ -137,9 +151,9 @@ public class MainActivity extends FragmentActivity {
 
 		// Set the Camera (view of the map) to our new marker. This makes it
 		// easy to see that the marker was added successfully.
-		CameraPosition cameraPosition = new CameraPosition.Builder().target(home).zoom(10.0f).build();
-		CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
-		mMap.moveCamera(cameraUpdate);
+		//CameraPosition cameraPosition = new CameraPosition.Builder().target(home).zoom(10.0f).build();
+		//CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
+		//mMap.moveCamera(cameraUpdate);
 
 	}
 }
