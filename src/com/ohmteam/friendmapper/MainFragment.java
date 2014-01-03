@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.facebook.Session;
+import com.facebook.SessionLoginBehavior;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
 import com.facebook.widget.LoginButton;
@@ -34,6 +35,7 @@ public class MainFragment extends Fragment {
 		authButton.setFragment(this);
 		authButton.setReadPermissions(Arrays.asList("friends_location"));
 
+		authButton.setLoginBehavior(SessionLoginBehavior.SUPPRESS_SSO);
 		// loadFriendsButton = (Button) view.findViewById(R.id.friendsButton);
 		// loadFriendsButton.setOnClickListener(friendsClickListener);
 		// updateFriendsButtonVisibility(Session.getActiveSession());
@@ -103,6 +105,7 @@ public class MainFragment extends Fragment {
 	}
 
 	private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+		Log.i(TAG, "Session State Changed to " + state);
 		if (state.isOpened()) {
 			Log.i(TAG, "Logged in...");
 			tryRunLoginTasks();
