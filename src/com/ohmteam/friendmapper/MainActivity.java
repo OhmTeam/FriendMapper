@@ -12,108 +12,151 @@ import android.util.Log;
 
 import com.facebook.Session;
 import com.facebook.model.GraphUser;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.ohmteam.friendmapper.data.ContentOverseer;
 import com.ohmteam.friendmapper.io.ImageLoaderTask;
-import com.ohmteam.friendmapper.util.ContentOverseer;
 import com.ohmteam.friendmapper.util.DaemonThreadFactory;
 import com.ohmteam.friendmapper.util.ResultCallback;
 
 public class MainActivity extends FragmentActivity {
 	private GoogleMap mMap;
-
+	private final ContentOverseer contentOverseer = new ContentOverseer();
+	private boolean needsToLoadFriends = true;
 	private MainFragment mainFragment;
+
+	private final String TAG = "MainActivity";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		Log.i(TAG, "Creating MainActivity " + this.hashCode());
 		// setContentView(R.layout.main);
 		// setUpMapIfNeeded();
 		// super.onCreate(savedInstanceState);
 
 		if (savedInstanceState == null) {
+			Log.i(TAG, "onCreate with no saved state");
 			// Add the fragment on initial activity setup
 			mainFragment = new MainFragment();
 			getSupportFragmentManager().beginTransaction().add(android.R.id.content, mainFragment).commit();
 		} else {
+
+			contentOverseer.loadFromBundle("contentOverseer", savedInstanceState);
+			needsToLoadFriends = savedInstanceState.getBoolean("needsToLoadFriends");
+
+			Log.i(TAG, "onCreate with a saved state");
 			// Or set the fragment from restored state info
 			mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(android.R.id.content);
 		}
 	}
 
 	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
+		outState.putBoolean("needsToLoadFriends", needsToLoadFriends);
+		contentOverseer.saveToBundle("contentOverseer", outState);
+
+		outState.putBoolean("didLoadMap", mMap != null);
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.i(TAG, "onResume");
 		setUpMapIfNeeded();
+		loadFriendsIfNeeded();
+	}
+
+	/**
+	 * Updates the state of the friend markers on the map. If friend data has
+	 * already been loaded, it simply refreshes the markers. If no data has been
+	 * loaded yet, it loads the data and then updates the markers.
+	 */
+	private void loadFriendsIfNeeded() {
+		if (needsToLoadFriends) {
+			Log.i(TAG, "loadFriendsIfNeeded: doing a full load of friend data");
+			loadFriendsData();
+		} else {
+			Log.i(TAG, "loadFriendsIfNeeded: adding markers from previously-loaded friend data");
+			updateFriendMarkers();
+		}
+	}
+
+	/**
+	 * Adds markers for friends at their respective locations, based on the
+	 * knowledge that is currently available in the contentOverseer.
+	 * 
+	 * TODO: remove old markers... requires keeping track of which ones were
+	 * added via this method.
+	 */
+	private void updateFriendMarkers() {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				for (LatLng loc : contentOverseer.getUsedLocations()) {
+					String names = contentOverseer.getFriendsFromLoc(loc);
+
+					MarkerOptions mo = new MarkerOptions();
+					mo.position(loc);
+					mo.title(names);
+					mo.icon(BitmapDescriptorFactory.defaultMarker());
+
+					mMap.addMarker(mo);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Triggers a FriendsLoader.loadFriends request at the next available
+	 * Facebook login+session. Once friends and locations are resolved, the data
+	 * will be put into the contentOverseer, the `needsToLoadFriends` flag will
+	 * be reset, and `updateFriendMarkers` will be called.
+	 */
+	private void loadFriendsData() {
+		mainFragment.runOnNextLogin(new Runnable() {
+			@Override
+			public void run() {
+				FriendsLoader loader = new FriendsLoader();
+
+				loader.loadFriends(Session.getActiveSession(), new FriendsLoader.Callback() {
+					@Override
+					public void onComplete(Map<GraphUser, FriendLocation> friendsLocations) {
+						// add the location data into the contentOverseer
+						for (Entry<GraphUser, FriendLocation> entry : friendsLocations.entrySet()) {
+							String name = entry.getKey().getName();
+							FriendLocation loc = entry.getValue();
+							LatLng locLL = new LatLng(loc.getLatitude(), loc.getLongitude());
+							contentOverseer.addUsedLocation(locLL, name);
+						}
+						needsToLoadFriends = false;
+						// trigger a UI update
+						updateFriendMarkers();
+					}
+				});
+			}
+		});
 	}
 
 	private void setUpMapIfNeeded() {
 		if (mMap != null) {
+			Log.i(TAG, "map instance " + mMap.hashCode());
 			return;
 		}
 		mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 		if (mMap == null) {
 			return;
 		}
+		Log.i(TAG, "map instance " + mMap.hashCode());
 		// Initialize map options. For example:
 		// mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 		mMap.setMyLocationEnabled(true);
-
-		mainFragment.runOnNextLogin(new Runnable() {
-			@Override
-			public void run() {
-				Log.i("MainFragment", "Logged in for the first time probably!");
-				FriendsLoader loader = new FriendsLoader();
-
-				loader.loadFriends(Session.getActiveSession(), new FriendsLoader.Callback() {
-					@Override
-					public void onComplete(final Map<GraphUser, FriendLocation> friendsLocations) {
-						Log.d("MainFragment", "loaded " + friendsLocations.size()
-								+ " friends... now to put them on the map");
-						runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								
-								ContentOverseer usedLocationsMap = new ContentOverseer();
-								for (Entry<GraphUser, FriendLocation> entry : friendsLocations.entrySet()) {
-									// Log.d("MainFragment",
-									// "friend: " + entry.getKey().getName() +
-									// " at " + entry.getValue());
-									String friendName = entry.getKey().getName();
-									FriendLocation loc = entry.getValue();
-									
-									
-									LatLng locLL = new LatLng(loc.getLatitude(), loc.getLongitude());
-									Log.d("Foo", friendName + " at " + locLL);
-									
-									//Add Location to location used maps. If if is already a ued location, the friends name will be
-									//added to the associated set. 
-									usedLocationsMap.addUsedLocation(locLL, friendName);
-									
-								}
-								for (LatLng markerCoord : usedLocationsMap.getUsedLocations())
-								{
-									
-									MarkerOptions mo = new MarkerOptions();
-									mo.position(markerCoord);
-									mo.title(usedLocationsMap.getFriendsFromLoc(markerCoord));
-									mo.icon(BitmapDescriptorFactory.defaultMarker());
-
-									mMap.addMarker(mo);
-								}
-
-							}
-						});
-					}
-				});
-			}
-		});
 
 		// Set Latitude and Longitude for a new marker here
 		// I've called it home, because it currently points at my
@@ -151,9 +194,11 @@ public class MainActivity extends FragmentActivity {
 
 		// Set the Camera (view of the map) to our new marker. This makes it
 		// easy to see that the marker was added successfully.
-		//CameraPosition cameraPosition = new CameraPosition.Builder().target(home).zoom(10.0f).build();
-		//CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
-		//mMap.moveCamera(cameraUpdate);
+		// CameraPosition cameraPosition = new
+		// CameraPosition.Builder().target(home).zoom(10.0f).build();
+		// CameraUpdate cameraUpdate =
+		// CameraUpdateFactory.newCameraPosition(cameraPosition);
+		// mMap.moveCamera(cameraUpdate);
 
 	}
 }
