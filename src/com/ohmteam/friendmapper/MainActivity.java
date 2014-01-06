@@ -1,9 +1,6 @@
 package com.ohmteam.friendmapper;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,7 +10,6 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.facebook.Session;
-import com.facebook.model.GraphUser;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -97,18 +93,7 @@ public class MainActivity extends FragmentActivity {
 
 				loader.loadFriends(Session.getActiveSession(), new FriendsLoader.Callback() {
 					@Override
-					public void onComplete(Map<GraphUser, FriendLocation> friendsLocations) {
-						// add the location data into the contentOverseer
-						List<FacebookFriend> friends = new ArrayList<FacebookFriend>(friendsLocations.size());
-
-						for (Entry<GraphUser, FriendLocation> entry : friendsLocations.entrySet()) {
-							String id = entry.getKey().getId();
-							String name = entry.getKey().getName();
-							FriendLocation loc = entry.getValue();
-							LatLng locLL = new LatLng(loc.getLatitude(), loc.getLongitude());
-
-							friends.add(new FacebookFriend(id, name, locLL));
-						}
+					public void onComplete(List<FacebookFriend> friends) {
 						needsToLoadFriends = false;
 						markerManager.setFriends(friends);
 					}
@@ -125,14 +110,17 @@ public class MainActivity extends FragmentActivity {
 		if (map == null) {
 			return;
 		}
-		// Initialize map options. For example:
-		// mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
 		map.setMyLocationEnabled(true);
 
 		markerManager.setMap(map);
 
+		// setupExampleMarker();
 	}
 
+	/**
+	 * Sets up an example map marker with a custom image.
+	 */
 	public void setupExampleMarker() {
 		// Set Latitude and Longitude for a new marker here
 		// I've called it home, because it currently points at my
