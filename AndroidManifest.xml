@@ -38,6 +38,10 @@
         <meta-data
                 android:name="com.google.android.maps.v2.API_KEY"
                 android:value="AIzaSyCJS-icG6lEt_1oQYTaZhDxvY8Px-KJk6M"/>
+        
+        <meta-data 
+                android:name="com.google.android.gms.version"
+                android:value="@integer/google_play_services_version" />
 
         <activity
                 android:name="MainActivity"
