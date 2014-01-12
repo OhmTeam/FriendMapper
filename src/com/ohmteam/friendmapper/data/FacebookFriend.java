@@ -1,13 +1,14 @@
 package com.ohmteam.friendmapper.data;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.ohmteam.friendmapper.util.HasLocation;
 
 /**
  * Represents a Friend on Facebook.
  * 
  * @author Dylan
  */
-public class FacebookFriend {
+public class FacebookFriend implements HasLocation {
 	private final String id;
 	private final String name;
 	private final LatLng location;
