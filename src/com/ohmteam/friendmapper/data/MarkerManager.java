@@ -240,13 +240,15 @@ public class MarkerManager {
 
 		// Clear the list of loaded Facebook friends so that the map is not
 		// re-populated when re-sized
-		this.friends.clear();
 
-		// Remove each Marker from the map
-		for (MapMarker marker : markers) {
-			marker.detach();
-		}
-
+		List<FacebookFriend> emptyList = new LinkedList<FacebookFriend>();
+		setFriends(emptyList);
+		/*
+		 * this.friends.clear();
+		 * 
+		 * // Remove each Marker from the map for (MapMarker marker : markers) {
+		 * marker.detach(); }
+		 */
 	}
 
 	public boolean friendsListIsEmpty() {
