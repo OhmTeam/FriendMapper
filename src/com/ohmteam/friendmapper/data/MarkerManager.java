@@ -42,15 +42,16 @@ public class MarkerManager {
 	/**
 	 * Constructor.
 	 * 
-	 * @param activity A reference to an activity so that this manager can
-	 *        request to run tasks on the UI thread (necessary for updating
-	 *        markers). TODO: maybe use a Handler instead, for better
-	 *        encapsulation so that this class isn't coupled to Activity
-	 *        anymore.
-	 * @param clusterRadius The number of pixels to use as the location
-	 *        clustering threshold. Note: the clustering algorithm is very
-	 *        primitive at this time, so the clusterRadius is simply used as a
-	 *        tile size for grid-based spacial bucketing.
+	 * @param activity
+	 *            A reference to an activity so that this manager can request to
+	 *            run tasks on the UI thread (necessary for updating markers).
+	 *            TODO: maybe use a Handler instead, for better encapsulation so
+	 *            that this class isn't coupled to Activity anymore.
+	 * @param clusterRadius
+	 *            The number of pixels to use as the location clustering
+	 *            threshold. Note: the clustering algorithm is very primitive at
+	 *            this time, so the clusterRadius is simply used as a tile size
+	 *            for grid-based spacial bucketing.
 	 */
 	public MarkerManager(Activity activity, int clusterRadius) {
 		this.activity = activity;
@@ -61,7 +62,8 @@ public class MarkerManager {
 	 * Point this manager at a GoogleMap, so that it can listen for changes in
 	 * the zoom level and update the friend markers accordingly.
 	 * 
-	 * @param map The map for this manager to use.
+	 * @param map
+	 *            The map for this manager to use.
 	 */
 	public void setMap(GoogleMap map) {
 		if (map != null && map != this.map) {
@@ -75,7 +77,8 @@ public class MarkerManager {
 	 * Set the friends list, triggering a recalculation of the markers, and a UI
 	 * update.
 	 * 
-	 * @param friends A list containing the friends to be displayed.
+	 * @param friends
+	 *            A list containing the friends to be displayed.
 	 */
 	public synchronized void setFriends(List<FacebookFriend> friends) {
 		this.friends.clear();
@@ -86,7 +89,8 @@ public class MarkerManager {
 	/**
 	 * Save the state (current friends list) of this manager to a Bundle.
 	 * 
-	 * @param bundle The bundle to save to.
+	 * @param bundle
+	 *            The bundle to save to.
 	 */
 	public void saveTo(Bundle bundle) {
 		Bundle friendsList = FacebookFriendBundler.friendsToBundle(friends);
@@ -96,7 +100,8 @@ public class MarkerManager {
 	/**
 	 * Load a state (friends list) from the given bundle into this manager.
 	 * 
-	 * @param bundle The bundle to load from
+	 * @param bundle
+	 *            The bundle to load from
 	 */
 	public void loadFrom(Bundle bundle) {
 		Bundle friendsBundle = bundle.getBundle("markerManagerFriends");
@@ -139,8 +144,9 @@ public class MarkerManager {
 	 * Based on the current friends list, calculates a hierarchy of clusters and
 	 * locations, then adds the appropriate markers to the map.
 	 * 
-	 * @param mapProjection the GoogleMap's projection, used to transform back
-	 *        and forth between Latitude/Longitude space and Pixel space.
+	 * @param mapProjection
+	 *            the GoogleMap's projection, used to transform back and forth
+	 *            between Latitude/Longitude space and Pixel space.
 	 */
 	private void recalculateMarkers(Projection mapProjection) {
 		// detach all of the previous markers, and clear the list
@@ -169,9 +175,12 @@ public class MarkerManager {
 		// MapLocations
 		// scala: locations = (for{(loc, friends) <- locationsMap} yield new
 		// MapLocation(loc, friends)).toList
-		List<MapLocation> locations = new ArrayList<MapLocation>(locationsMap.size());
-		for (Entry<LatLng, List<FacebookFriend>> entry : locationsMap.entrySet()) {
-			MapLocation location = new MapLocation(entry.getKey(), entry.getValue());
+		List<MapLocation> locations = new ArrayList<MapLocation>(
+				locationsMap.size());
+		for (Entry<LatLng, List<FacebookFriend>> entry : locationsMap
+				.entrySet()) {
+			MapLocation location = new MapLocation(entry.getKey(),
+					entry.getValue());
 			locations.add(location);
 		}
 
@@ -179,11 +188,13 @@ public class MarkerManager {
 		// group all of the MapLocations by clusters that are near each other
 		// -----------------------------------------------------------------
 
-		GridMap<MapLocation> clusterGrid = new GridMap<MapLocation>(clusterRadius);
+		GridMap<MapLocation> clusterGrid = new GridMap<MapLocation>(
+				clusterRadius);
 		// add all locations to the cluster grid so that they get grouped by
 		// what tile they belong in
 		for (MapLocation location : locations) {
-			Point pixelLocation = mapProjection.toScreenLocation(location.location);
+			Point pixelLocation = mapProjection
+					.toScreenLocation(location.location);
 			clusterGrid.add(pixelLocation, location);
 		}
 		for (Point tileCorner : clusterGrid.getFilledTiles()) {
@@ -191,8 +202,10 @@ public class MarkerManager {
 			// that tile
 			// scala: tileLocations = clusterGrid.getNearbyEntries(tileCorner,
 			// 0).map(_._2)
-			List<Tuple<Point, MapLocation>> tileEntries = clusterGrid.getNearbyEntries(tileCorner, 0);
-			List<MapLocation> tileLocations = new ArrayList<MapLocation>(tileEntries.size());
+			List<Tuple<Point, MapLocation>> tileEntries = clusterGrid
+					.getNearbyEntries(tileCorner, 0);
+			List<MapLocation> tileLocations = new ArrayList<MapLocation>(
+					tileEntries.size());
 			for (Tuple<Point, MapLocation> entry : tileEntries) {
 				tileLocations.add(entry._2);
 			}
@@ -209,8 +222,10 @@ public class MarkerManager {
 				markerPos = tileLocations.get(0).location;
 			} else {
 				// for many locations, use the grid center for the marker
-				Point tileCenterPixel = clusterGrid.roundToGridCenter(tileCorner);
-				LatLng tileCenter = mapProjection.fromScreenLocation(tileCenterPixel);
+				Point tileCenterPixel = clusterGrid
+						.roundToGridCenter(tileCorner);
+				LatLng tileCenter = mapProjection
+						.fromScreenLocation(tileCenterPixel);
 				markerPos = tileCenter;
 			}
 
@@ -219,5 +234,22 @@ public class MarkerManager {
 			marker.attach(map);
 			markers.add(marker);
 		}
+	}
+
+	public void removeAllMarkers() {
+
+		// Clear the list of loaded Facebook friends so that the map is not
+		// re-populated when re-sized
+		this.friends.clear();
+
+		// Remove each Marker from the map
+		for (MapMarker marker : markers) {
+			marker.detach();
+		}
+
+	}
+
+	public boolean friendsListIsEmpty() {
+		return friends.isEmpty();
 	}
 }
