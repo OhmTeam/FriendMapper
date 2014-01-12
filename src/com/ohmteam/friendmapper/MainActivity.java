@@ -38,16 +38,19 @@ public class MainActivity extends FragmentActivity {
 			Log.i(TAG, "onCreate with no saved state");
 			// Add the fragment on initial activity setup
 			mainFragment = new MainFragment();
-			getSupportFragmentManager().beginTransaction().add(android.R.id.content, mainFragment).commit();
+			getSupportFragmentManager().beginTransaction()
+					.add(android.R.id.content, mainFragment).commit();
 
 		} else {
 
 			Log.i(TAG, "onCreate with a saved state");
 			// Or set the fragment from restored state info
-			mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(android.R.id.content);
+			mainFragment = (MainFragment) getSupportFragmentManager()
+					.findFragmentById(android.R.id.content);
 
 			markerManager.loadFrom(savedInstanceState);
-			needsToLoadFriends = savedInstanceState.getBoolean("needsToLoadFriends");
+			needsToLoadFriends = savedInstanceState
+					.getBoolean("needsToLoadFriends");
 		}
 	}
 
@@ -63,6 +66,7 @@ public class MainActivity extends FragmentActivity {
 	protected void onResume() {
 		super.onResume();
 		Log.i(TAG, "onResume");
+		mainFragment.setMarkerManager(markerManager);
 		setUpMapIfNeeded();
 		loadFriendsIfNeeded();
 	}
@@ -91,13 +95,14 @@ public class MainActivity extends FragmentActivity {
 			public void run() {
 				FriendsLoader loader = new FriendsLoader();
 
-				loader.loadFriends(Session.getActiveSession(), new FriendsLoader.Callback() {
-					@Override
-					public void onComplete(List<FacebookFriend> friends) {
-						needsToLoadFriends = false;
-						markerManager.setFriends(friends);
-					}
-				});
+				loader.loadFriends(Session.getActiveSession(),
+						new FriendsLoader.Callback() {
+							@Override
+							public void onComplete(List<FacebookFriend> friends) {
+								needsToLoadFriends = false;
+								markerManager.setFriends(friends);
+							}
+						});
 			}
 		});
 	}
@@ -106,7 +111,8 @@ public class MainActivity extends FragmentActivity {
 		if (map != null) {
 			return;
 		}
-		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+		map = ((SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map)).getMap();
 		if (map == null) {
 			return;
 		}
@@ -138,7 +144,8 @@ public class MainActivity extends FragmentActivity {
 		 * TODO: figure out if something needs to be done to this thing when the
 		 * activity stops/pauses/resumes.
 		 */
-		ExecutorService backgroundTaskService = Executors.newFixedThreadPool(3, new DaemonThreadFactory());
+		ExecutorService backgroundTaskService = Executors.newFixedThreadPool(3,
+				new DaemonThreadFactory());
 
 		// Create the marker. Default marker type is the standard google marker
 		// Modified through accessor functions as shown below
@@ -151,9 +158,11 @@ public class MainActivity extends FragmentActivity {
 		 * marker, then add that marker to the map; the task will be run on a
 		 * background thread via the backgroundTaskService.
 		 */
-		ResultCallback<Bitmap> addMarkerCallback = new MapMarkerBitmapCallback(this, map, marker);
+		ResultCallback<Bitmap> addMarkerCallback = new MapMarkerBitmapCallback(
+				this, map, marker);
 		String imageUrl = "http://3.bp.blogspot.com/-uILNxoeY8Sk/TzMmmd5kvdI/AAAAAAAAAMI/AaOWXbN9E6o/s45/lol-face.gif";
-		Runnable loadImageTask = new ImageLoaderTask(imageUrl, addMarkerCallback);
+		Runnable loadImageTask = new ImageLoaderTask(imageUrl,
+				addMarkerCallback);
 		backgroundTaskService.execute(loadImageTask);
 
 		// Set the Camera (view of the map) to our new marker. This makes it

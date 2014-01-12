@@ -52,7 +52,8 @@ public class MarkerManager {
 	 * Point this manager at a GoogleMap, so that it can listen for changes in the zoom level and
 	 * update the friend markers accordingly.
 	 * 
-	 * @param map The map for this manager to use.
+	 * @param map
+	 *            The map for this manager to use.
 	 */
 	public void setMap(GoogleMap map) {
 		if (map != null && map != this.map) {
@@ -65,7 +66,8 @@ public class MarkerManager {
 	/**
 	 * Set the friends list, triggering a recalculation of the markers, and a UI update.
 	 * 
-	 * @param friends A list containing the friends to be displayed.
+	 * @param friends
+	 *            A list containing the friends to be displayed.
 	 */
 	public synchronized void setFriends(List<FacebookFriend> friends) {
 		this.friends.clear();
@@ -77,7 +79,8 @@ public class MarkerManager {
 	/**
 	 * Save the state (current friends list) of this manager to a Bundle.
 	 * 
-	 * @param bundle The bundle to save to.
+	 * @param bundle
+	 *            The bundle to save to.
 	 */
 	public void saveTo(Bundle bundle) {
 		Bundle friendsList = FacebookFriendBundler.friendsToBundle(friends);
@@ -87,7 +90,8 @@ public class MarkerManager {
 	/**
 	 * Load a state (friends list) from the given bundle into this manager.
 	 * 
-	 * @param bundle The bundle to load from
+	 * @param bundle
+	 *            The bundle to load from
 	 */
 	public void loadFrom(Bundle bundle) {
 		Bundle friendsBundle = bundle.getBundle("markerManagerFriends");
@@ -159,5 +163,24 @@ public class MarkerManager {
 			marker.attach(map);
 			markers.add(marker);
 		}
+	}
+
+	public void removeAllMarkers() {
+
+		// Clear the list of loaded Facebook friends so that the map is not
+		// re-populated when re-sized
+
+		List<FacebookFriend> emptyList = new LinkedList<FacebookFriend>();
+		setFriends(emptyList);
+		/*
+		 * this.friends.clear();
+		 * 
+		 * // Remove each Marker from the map for (MapMarker marker : markers) {
+		 * marker.detach(); }
+		 */
+	}
+
+	public boolean friendsListIsEmpty() {
+		return friends.isEmpty();
 	}
 }
