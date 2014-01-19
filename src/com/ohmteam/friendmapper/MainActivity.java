@@ -38,16 +38,19 @@ public class MainActivity extends FragmentActivity {
 			Log.i(TAG, "onCreate with no saved state");
 			// Add the fragment on initial activity setup
 			mainFragment = new MainFragment();
-			getSupportFragmentManager().beginTransaction().add(android.R.id.content, mainFragment).commit();
+			getSupportFragmentManager().beginTransaction()
+					.add(android.R.id.content, mainFragment).commit();
 
 		} else {
 
 			Log.i(TAG, "onCreate with a saved state");
 			// Or set the fragment from restored state info
-			mainFragment = (MainFragment) getSupportFragmentManager().findFragmentById(android.R.id.content);
+			mainFragment = (MainFragment) getSupportFragmentManager()
+					.findFragmentById(android.R.id.content);
 
 			markerManager.loadFrom(savedInstanceState);
-			needsToLoadFriends = savedInstanceState.getBoolean("needsToLoadFriends");
+			needsToLoadFriends = savedInstanceState
+					.getBoolean("needsToLoadFriends");
 		}
 	}
 
@@ -64,14 +67,15 @@ public class MainActivity extends FragmentActivity {
 		super.onResume();
 		Log.i(TAG, "onResume");
 		mainFragment.setMarkerManager(markerManager);
+		mainFragment.setMainActivity(this);
 		setUpMapIfNeeded();
 		loadFriendsIfNeeded();
 	}
 
 	/**
-	 * Updates the state of the friend markers on the map. If friend data has already been loaded,
-	 * it simply refreshes the markers. If no data has been loaded yet, it loads the data and then
-	 * updates the markers.
+	 * Updates the state of the friend markers on the map. If friend data has
+	 * already been loaded, it simply refreshes the markers. If no data has been
+	 * loaded yet, it loads the data and then updates the markers.
 	 */
 	private void loadFriendsIfNeeded() {
 		if (needsToLoadFriends) {
@@ -81,9 +85,10 @@ public class MainActivity extends FragmentActivity {
 	}
 
 	/**
-	 * Triggers a FriendsLoader.loadFriends request at the next available Facebook login+session.
-	 * Once friends and locations are resolved, the data will be put into the contentOverseer, the
-	 * `needsToLoadFriends` flag will be reset, and `updateFriendMarkers` will be called.
+	 * Triggers a FriendsLoader.loadFriends request at the next available
+	 * Facebook login+session. Once friends and locations are resolved, the data
+	 * will be put into the contentOverseer, the `needsToLoadFriends` flag will
+	 * be reset, and `updateFriendMarkers` will be called.
 	 */
 	private void loadFriendsData() {
 		mainFragment.runOnNextLogin(new Runnable() {
@@ -91,13 +96,14 @@ public class MainActivity extends FragmentActivity {
 			public void run() {
 				FriendsLoader loader = new FriendsLoader();
 
-				loader.loadFriends(Session.getActiveSession(), new FriendsLoader.Callback() {
-					@Override
-					public void onComplete(List<FacebookFriend> friends) {
-						needsToLoadFriends = false;
-						markerManager.setFriends(friends);
-					}
-				});
+				loader.loadFriends(Session.getActiveSession(),
+						new FriendsLoader.Callback() {
+							@Override
+							public void onComplete(List<FacebookFriend> friends) {
+								needsToLoadFriends = false;
+								markerManager.setFriends(friends);
+							}
+						});
 			}
 		});
 	}
@@ -106,7 +112,8 @@ public class MainActivity extends FragmentActivity {
 		if (map != null) {
 			return;
 		}
-		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+		map = ((SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map)).getMap();
 		if (map == null) {
 			return;
 		}
@@ -129,15 +136,17 @@ public class MainActivity extends FragmentActivity {
 		LatLng home = new LatLng(38.905622, -77.033081);
 
 		/*
-		 * Create a thread pool executor that can be used to run arbitrary background tasks. It uses
-		 * a thread pool with 3 daemon threads. "3" is an arbitrary choice, but once we start
-		 * loading a bunch of different facebook friends' images, we might want to tweak the number
-		 * for better efficiency.
+		 * Create a thread pool executor that can be used to run arbitrary
+		 * background tasks. It uses a thread pool with 3 daemon threads. "3" is
+		 * an arbitrary choice, but once we start loading a bunch of different
+		 * facebook friends' images, we might want to tweak the number for
+		 * better efficiency.
 		 * 
-		 * TODO: figure out if something needs to be done to this thing when the activity
-		 * stops/pauses/resumes.
+		 * TODO: figure out if something needs to be done to this thing when the
+		 * activity stops/pauses/resumes.
 		 */
-		ExecutorService backgroundTaskService = Executors.newFixedThreadPool(3, new DaemonThreadFactory());
+		ExecutorService backgroundTaskService = Executors.newFixedThreadPool(3,
+				new DaemonThreadFactory());
 
 		// Create the marker. Default marker type is the standard google marker
 		// Modified through accessor functions as shown below
@@ -146,13 +155,15 @@ public class MainActivity extends FragmentActivity {
 		marker.title("Rob's Mo'fuckin' TOWN!");
 
 		/*
-		 * Set up a task that will load an image from a URL, apply it to the marker, then add that
-		 * marker to the map; the task will be run on a background thread via the
-		 * backgroundTaskService.
+		 * Set up a task that will load an image from a URL, apply it to the
+		 * marker, then add that marker to the map; the task will be run on a
+		 * background thread via the backgroundTaskService.
 		 */
-		ResultCallback<Bitmap> addMarkerCallback = new MapMarkerBitmapCallback(this, map, marker);
+		ResultCallback<Bitmap> addMarkerCallback = new MapMarkerBitmapCallback(
+				this, map, marker);
 		String imageUrl = "http://3.bp.blogspot.com/-uILNxoeY8Sk/TzMmmd5kvdI/AAAAAAAAAMI/AaOWXbN9E6o/s45/lol-face.gif";
-		Runnable loadImageTask = new ImageLoaderTask(imageUrl, addMarkerCallback);
+		Runnable loadImageTask = new ImageLoaderTask(imageUrl,
+				addMarkerCallback);
 		backgroundTaskService.execute(loadImageTask);
 
 		// Set the Camera (view of the map) to our new marker. This makes it
@@ -162,5 +173,10 @@ public class MainActivity extends FragmentActivity {
 		// CameraUpdate cameraUpdate =
 		// CameraUpdateFactory.newCameraPosition(cameraPosition);
 		// mMap.moveCamera(cameraUpdate);
+	}
+
+	public void loadFriendsTrigger(boolean loadFriends) {
+		needsToLoadFriends = loadFriends;
+		loadFriendsIfNeeded();
 	}
 }

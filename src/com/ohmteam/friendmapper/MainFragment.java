@@ -25,14 +25,17 @@ public class MainFragment extends Fragment {
 	private final List<Runnable> loginRunnables = new LinkedList<Runnable>();
 	private UiLifecycleHelper uiHelper;
 	private MarkerManager markerManager;
+	private MainActivity mainAct;
 
 	// Button loadFriendsButton;
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.main, container, false);
 
-		LoginButton authButton = (LoginButton) view.findViewById(R.id.authButton);
+		LoginButton authButton = (LoginButton) view
+				.findViewById(R.id.authButton);
 		authButton.setFragment(this);
 		authButton.setReadPermissions(Arrays.asList("friends_location"));
 
@@ -105,10 +108,12 @@ public class MainFragment extends Fragment {
 		uiHelper.onSaveInstanceState(outState);
 	}
 
-	private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+	private void onSessionStateChange(Session session, SessionState state,
+			Exception exception) {
 		Log.i(TAG, "Session State Changed to " + state);
 		if (state.isOpened()) {
 			Log.i(TAG, "Logged in...");
+			mainAct.loadFriendsTrigger(true);
 			tryRunLoginTasks();
 		} else if (state.isClosed()) {
 			Log.i(TAG, "Logged out...");
@@ -120,7 +125,8 @@ public class MainFragment extends Fragment {
 
 	private final Session.StatusCallback callback = new Session.StatusCallback() {
 		@Override
-		public void call(Session session, SessionState state, Exception exception) {
+		public void call(Session session, SessionState state,
+				Exception exception) {
 			onSessionStateChange(session, state, exception);
 		}
 	};
@@ -169,5 +175,9 @@ public class MainFragment extends Fragment {
 
 	public void setMarkerManager(MarkerManager mm) {
 		this.markerManager = mm;
+	}
+
+	public void setMainActivity(MainActivity ma) {
+		this.mainAct = ma;
 	}
 }
