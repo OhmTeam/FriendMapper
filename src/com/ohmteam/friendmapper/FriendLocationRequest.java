@@ -21,10 +21,9 @@ import com.facebook.model.GraphObject;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
- * Utility class containing static methods for finding the latitude and
- * longitude for facebook locations. Uses request batching to minimize the HTTP
- * overhead of Facebook API calls, while enabline many locations to be requested
- * at once.
+ * Utility class containing static methods for finding the latitude and longitude for facebook
+ * locations. Uses request batching to minimize the HTTP overhead of Facebook API calls, while
+ * enabline many locations to be requested at once.
  * 
  * @author Dylan
  */
@@ -34,9 +33,8 @@ public class FriendLocationRequest {
 	private final static String TAG = "FriendLocationRequest";
 
 	/**
-	 * A limitation of the Facebook API. Batched requests can only have up to 50
-	 * requests at a time. Any more than that and we need to create multiple
-	 * batches.
+	 * A limitation of the Facebook API. Batched requests can only have up to 50 requests at a time.
+	 * Any more than that and we need to create multiple batches.
 	 */
 	private final static int requestBatchMaxSize = 50;
 
@@ -54,17 +52,14 @@ public class FriendLocationRequest {
 	}
 
 	/**
-	 * Using the Facebook Web API, request location details for a set of
-	 * locations. Details for a location are its Latitude and Longitude. The
-	 * requested locations are specified by their Facebook IDs, which will
-	 * generally have been returned by some previous API call.
+	 * Using the Facebook Web API, request location details for a set of locations. Details for a
+	 * location are its Latitude and Longitude. The requested locations are specified by their
+	 * Facebook IDs, which will generally have been returned by some previous API call.
 	 * 
-	 * @param session The Facebook Session, required for making Facebook API
-	 *        calls.
-	 * @param locationIds A Set containing the IDs for all of the locations
-	 *        being looked up.
-	 * @param callback A callback object whose onCompleted method will be called
-	 *        once the request has been completed.
+	 * @param session The Facebook Session, required for making Facebook API calls.
+	 * @param locationIds A Set containing the IDs for all of the locations being looked up.
+	 * @param callback A callback object whose onCompleted method will be called once the request
+	 *        has been completed.
 	 */
 	public static void requestLocations(Session session, Set<String> locationIds, Callback callback) {
 
@@ -108,10 +103,9 @@ public class FriendLocationRequest {
 	}
 
 	/**
-	 * An instance of this class is used to contain the results of many
-	 * individual location detail requests. As a request for a location's
-	 * details is fulfilled, it adds its result to an instance of this class.
-	 * Once the number of expected requests has been reached, it invokes a
+	 * An instance of this class is used to contain the results of many individual location detail
+	 * requests. As a request for a location's details is fulfilled, it adds its result to an
+	 * instance of this class. Once the number of expected requests has been reached, it invokes a
 	 * callback function with the accumulated results.
 	 * 
 	 * @author Dylan
@@ -125,8 +119,8 @@ public class FriendLocationRequest {
 		/**
 		 * Constructor.
 		 * 
-		 * @param callback The callback function to be called once all of the
-		 *        expected requests have completed.
+		 * @param callback The callback function to be called once all of the expected requests have
+		 *        completed.
 		 * @param numRequests The number of expected requests.
 		 */
 		public RequestInProgress(Callback callback, int numRequests) {
@@ -137,17 +131,14 @@ public class FriendLocationRequest {
 		}
 
 		/**
-		 * Adds the results of one location request to the results map. This
-		 * method can specify either a location or an error; either case will
-		 * increment the "satisfied requests" counter. If the counter reaches
-		 * the expected number of requests, the results callback will be
-		 * invoked.
+		 * Adds the results of one location request to the results map data structure. This method
+		 * can specify either a location or an error; either case will increment the
+		 * "satisfied requests" counter. If the counter reaches the expected number of requests, the
+		 * results callback will be invoked.
 		 * 
 		 * @param id The ID of the location whose details were requested
-		 * @param location The details (Latitude, Longitude) of the location.
-		 *        May be null.
-		 * @param error An error that occurred while requesting location
-		 *        details. May be null.
+		 * @param location The details (Latitude, Longitude) of the location. May be null.
+		 * @param error An error that occurred while requesting location details. May be null.
 		 */
 		public synchronized void add(String id, LatLng location, FacebookRequestError error) {
 			size += 1;
@@ -159,14 +150,15 @@ public class FriendLocationRequest {
 			}
 
 			if (size == numRequests) {
+				size = 0;
 				callback.onCompleted(results);
 			}
 		}
 	}
 
 	/**
-	 * Callback for a location request. It puts the LatLng location into the
-	 * results map for a RequestInProgress when the request has completed.
+	 * Callback for a location request. It puts the LatLng location into the results map for a
+	 * RequestInProgress when the request has completed.
 	 * 
 	 * @author Dylan
 	 */
@@ -178,8 +170,7 @@ public class FriendLocationRequest {
 		 * Constructor.
 		 * 
 		 * @param id The ID of the location being requested
-		 * @param rip The object to which the request's completed results are
-		 *        reported
+		 * @param rip The object to which the request's completed results are reported
 		 */
 		public SingleRequestCallback(String id, RequestInProgress rip) {
 			this.id = id;
@@ -205,13 +196,12 @@ public class FriendLocationRequest {
 		}
 
 		/**
-		 * Extract a LatLng object from the given "response" object. Expected
-		 * format for the response JSON is
-		 * <code>{ location: { latitude: XX.YY, longitude: XX.YY } }</code>.
+		 * Extract a LatLng object from the given "response" object. Expected format for the
+		 * response JSON is <code>{ location: { latitude: XX.YY, longitude: XX.YY } }</code>.
 		 * 
 		 * @param response The JSON from a Facebook API response.
-		 * @return A LatLng instance containing the latitude and longitude from
-		 *         the response, or null.
+		 * @return A LatLng instance containing the latitude and longitude from the response, or
+		 *         null.
 		 */
 		private LatLng extractLocation(JSONObject response) {
 			if (response == null)

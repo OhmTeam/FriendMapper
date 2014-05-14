@@ -11,8 +11,7 @@ import android.graphics.BitmapFactory;
 import com.ohmteam.friendmapper.util.ResultCallback;
 
 /**
- * A Runnable that loads an image from the internet, then sends it to a result
- * callback.
+ * A Runnable that loads an image from the internet, then sends it to a result callback.
  * 
  * @author Dylan
  */
@@ -24,11 +23,9 @@ public class ImageLoaderTask implements Runnable {
 	/**
 	 * Constructor.
 	 * 
-	 * @param link
-	 *            The String form of the image's URL
-	 * @param callback
-	 *            A callback function that will be called when the image loading
-	 *            succeeds or fails.
+	 * @param link The String form of the image's URL
+	 * @param callback A callback function that will be called when the image loading succeeds or
+	 *        fails.
 	 */
 	public ImageLoaderTask(String link, ResultCallback<Bitmap> callback) {
 		this.link = link;

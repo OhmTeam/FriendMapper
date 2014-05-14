@@ -10,8 +10,12 @@ import android.os.Bundle;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.ohmteam.friendmapper.data.clustering.Clusterizer;
 
 /**
@@ -52,8 +56,7 @@ public class MarkerManager {
 	 * Point this manager at a GoogleMap, so that it can listen for changes in the zoom level and
 	 * update the friend markers accordingly.
 	 * 
-	 * @param map
-	 *            The map for this manager to use.
+	 * @param map The map for this manager to use.
 	 */
 	public void setMap(GoogleMap map) {
 		if (map != null && map != this.map) {
@@ -66,8 +69,7 @@ public class MarkerManager {
 	/**
 	 * Set the friends list, triggering a recalculation of the markers, and a UI update.
 	 * 
-	 * @param friends
-	 *            A list containing the friends to be displayed.
+	 * @param friends A list containing the friends to be displayed.
 	 */
 	public synchronized void setFriends(List<FacebookFriend> friends) {
 		this.friends.clear();
@@ -79,8 +81,7 @@ public class MarkerManager {
 	/**
 	 * Save the state (current friends list) of this manager to a Bundle.
 	 * 
-	 * @param bundle
-	 *            The bundle to save to.
+	 * @param bundle The bundle to save to.
 	 */
 	public void saveTo(Bundle bundle) {
 		Bundle friendsList = FacebookFriendBundler.friendsToBundle(friends);
@@ -90,8 +91,7 @@ public class MarkerManager {
 	/**
 	 * Load a state (friends list) from the given bundle into this manager.
 	 * 
-	 * @param bundle
-	 *            The bundle to load from
+	 * @param bundle The bundle to load from
 	 */
 	public void loadFrom(Bundle bundle) {
 		Bundle friendsBundle = bundle.getBundle("markerManagerFriends");
@@ -160,6 +160,9 @@ public class MarkerManager {
 		// Use the clusters to add new markers to the map
 		for (Entry<LatLng, List<MapLocation>> entry : clusters.entrySet()) {
 			MapMarker marker = new MapMarker(entry.getKey(), entry.getValue());
+
+			MarkerOptions mOptions = marker.getMarkerOptions();
+			setMarkerBitmap(marker, mOptions);
 			marker.attach(map);
 			markers.add(marker);
 		}
@@ -175,12 +178,60 @@ public class MarkerManager {
 		/*
 		 * this.friends.clear();
 		 * 
-		 * // Remove each Marker from the map for (MapMarker marker : markers) {
-		 * marker.detach(); }
+		 * // Remove each Marker from the map for (MapMarker marker : markers) { marker.detach(); }
 		 */
 	}
 
 	public boolean friendsListIsEmpty() {
 		return friends.isEmpty();
+	}
+
+	public void attachMarker(Marker marker, MapMarker mapMarker) {
+		detach(marker);
+		marker = map.addMarker(mapMarker.getMarkerOptions());
+	}
+
+	/**
+	 * Remove this marker if it has been attached to a map.
+	 */
+	public void detach(Marker marker) {
+		if (marker != null) {
+			marker.remove();
+			marker = null;
+		}
+	}
+
+	public void setMarkerBitmap(MapMarker marker, MarkerOptions mOptions) {
+		/*
+		 * Set the marker's visuals (icon). If this marker is a cluster of multiple locations, use
+		 * an orange version of the default GoogleMaps marker. Failing that, if this marker is a
+		 * single location with multiple friends, use a blue version of the default GoogleMaps
+		 * marker. For a single-friend, single-location marker, just use the default GoogleMaps
+		 * marker.
+		 */
+		BitmapDescriptor icon = null;
+		if (marker.getNumLocationsAtMarker() > 1) {
+			icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE);
+			marker.setIcon(icon);
+		} else if (marker.getNumFriends() > 1) {
+			icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE);
+			marker.setIcon(icon);
+		} else {
+			marker.setIcon(icon);
+			/*
+			 * If there is only one friend at this location, load the profile pic from the
+			 * profilePic URL asynchronously
+			 * 
+			 * String picURL = marker.getFirstFriend().getProfilePicURL();
+			 * 
+			 * ResultCallback<Bitmap> callback = new MapMarkerBitmapCallback(activity, map,
+			 * mOptions); ImageLoaderTask ILT = new ImageLoaderTask(picURL, callback);
+			 * 
+			 * Executor executor = Executors.newSingleThreadExecutor();
+			 * 
+			 * executor.execute(ILT); // icon = BitmapDescriptorFactory.defaultMarker();
+			 */
+		}
+
 	}
 }
