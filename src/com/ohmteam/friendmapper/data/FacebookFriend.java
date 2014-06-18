@@ -12,22 +12,21 @@ public class FacebookFriend implements HasLocation {
 	private final String id;
 	private final String name;
 	private final LatLng location;
+	private boolean loadedImage;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param id
-	 *            The friend's ID according to Facebook. The ID should be able
-	 *            to be used with the Facebook API, and should not be null.
-	 * @param name
-	 *            The friend's full name, for display purposes.
-	 * @param location
-	 *            The location that the friend provided to Facebook.
+	 * @param id The friend's ID according to Facebook. The ID should be able to be used with the
+	 *        Facebook API, and should not be null.
+	 * @param name The friend's full name, for display purposes.
+	 * @param location The location that the friend provided to Facebook.
 	 */
 	public FacebookFriend(String id, String name, LatLng location) {
 		this.id = id;
 		this.name = name;
 		this.location = location;
+		this.loadedImage = false;
 
 	}
 
@@ -44,7 +43,15 @@ public class FacebookFriend implements HasLocation {
 	}
 
 	public String getProfilePicURL() {
-		return "http://graph.facebook.com/" + id + "/picture?type=large";
+		return "https://graph.facebook.com/" + id + "/picture?type=normal";
+	}
+
+	public boolean imageLoaded() {
+		return loadedImage;
+	}
+
+	public void setImageLoaded(boolean imageLoaded) {
+		this.loadedImage = imageLoaded;
 	}
 
 	@Override
@@ -53,8 +60,7 @@ public class FacebookFriend implements HasLocation {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result
-				+ ((location == null) ? 0 : location.hashCode());
+		result = prime * result + ((location == null) ? 0 : location.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}

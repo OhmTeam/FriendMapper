@@ -4,15 +4,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.ohmteam.friendmapper.MapMarkerBitmapCallback;
 import com.ohmteam.friendmapper.data.clustering.Clusterizer;
+import com.ohmteam.friendmapper.io.ImageLoaderTask;
+import com.ohmteam.friendmapper.util.ResultCallback;
 
 /**
  * An object that manages a friends list and displays it as a series of markers. Friends in
@@ -52,8 +58,7 @@ public class MarkerManager {
 	 * Point this manager at a GoogleMap, so that it can listen for changes in the zoom level and
 	 * update the friend markers accordingly.
 	 * 
-	 * @param map
-	 *            The map for this manager to use.
+	 * @param map The map for this manager to use.
 	 */
 	public void setMap(GoogleMap map) {
 		if (map != null && map != this.map) {
@@ -66,8 +71,7 @@ public class MarkerManager {
 	/**
 	 * Set the friends list, triggering a recalculation of the markers, and a UI update.
 	 * 
-	 * @param friends
-	 *            A list containing the friends to be displayed.
+	 * @param friends A list containing the friends to be displayed.
 	 */
 	public synchronized void setFriends(List<FacebookFriend> friends) {
 		this.friends.clear();
@@ -79,8 +83,7 @@ public class MarkerManager {
 	/**
 	 * Save the state (current friends list) of this manager to a Bundle.
 	 * 
-	 * @param bundle
-	 *            The bundle to save to.
+	 * @param bundle The bundle to save to.
 	 */
 	public void saveTo(Bundle bundle) {
 		Bundle friendsList = FacebookFriendBundler.friendsToBundle(friends);
@@ -90,8 +93,7 @@ public class MarkerManager {
 	/**
 	 * Load a state (friends list) from the given bundle into this manager.
 	 * 
-	 * @param bundle
-	 *            The bundle to load from
+	 * @param bundle The bundle to load from
 	 */
 	public void loadFrom(Bundle bundle) {
 		Bundle friendsBundle = bundle.getBundle("markerManagerFriends");
@@ -160,6 +162,26 @@ public class MarkerManager {
 		// Use the clusters to add new markers to the map
 		for (Entry<LatLng, List<MapLocation>> entry : clusters.entrySet()) {
 			MapMarker marker = new MapMarker(entry.getKey(), entry.getValue());
+
+			// Check to see if the marker is a singlet.
+			if (marker.getNumFriends() == 1) {
+				// If it is a singlet, check to see if the picture is loaded and saved as a bitmap
+				// resource
+				boolean imageLoaded = marker.getFirstFriend().imageLoaded();
+				if (imageLoaded) {
+					// If it is loaded, show the bitmap as is
+
+				} else {
+					// If it is not loaded, load an asynchronous loader task
+					ExecutorService backgroundTaskService = Executors.newSingleThreadExecutor();
+					ResultCallback<Bitmap> addMarkerCallback = new MapMarkerBitmapCallback(activity, map, marker);
+					String imageUrl = marker.getFirstFriend().getProfilePicURL();// "https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xfp1/t1.0-1/p200x200/1499616_10154032046470157_806633043_n.jpg";//
+					Runnable loadImageTask = new ImageLoaderTask(imageUrl, addMarkerCallback);
+					backgroundTaskService.execute(loadImageTask);
+				}
+
+			}
+			marker.detach();
 			marker.attach(map);
 			markers.add(marker);
 		}
@@ -175,8 +197,7 @@ public class MarkerManager {
 		/*
 		 * this.friends.clear();
 		 * 
-		 * // Remove each Marker from the map for (MapMarker marker : markers) {
-		 * marker.detach(); }
+		 * // Remove each Marker from the map for (MapMarker marker : markers) { marker.detach(); }
 		 */
 	}
 
